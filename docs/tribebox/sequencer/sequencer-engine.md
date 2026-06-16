@@ -20,6 +20,9 @@ TribeBox uses:
 - 16-step pages
 - up to 128 steps per pattern
 - per-track length
+- separate Trigger Engine and Pitch Engine layers
+- STEP and EUCLIDEAN trigger generation
+- OFF / MANUAL / ROOT_LOCK / SCALE_LOCK / GENERATIVE pitch modes
 - per-step parameter locks
 - per-step sample locks
 - per-step slice locks on Track 8 Sampler
@@ -31,17 +34,26 @@ TribeBox uses:
 - fill behavior
 - trig conditions
 - probability
-- scale/root context for Bass and Acid/Lead
-- limited editor-based generative pitch tools
+- shared root/scale musical context
+- controlled generative pitch behavior
 - non-destructive pattern variations
 
 The sequencer should feel immediate like a drum machine, but deep enough to create evolving patterns from a small amount of visible step data.
+
+The Trigger Engine and Pitch Engine are intentionally separate:
+
+```text
+Trigger Engine = when a sound is triggered
+Pitch Engine   = which note is played
+```
+
+See `trigger-pitch-engine.md` for the detailed Trigger / Pitch Engine specification.
 
 ---
 
 ## Pattern Structure
 
-A Pattern contains one shared Kit reference and up to four Variation slots.
+A Pattern contains one shared Kit reference, one musical context, and up to four Variation slots.
 
 ```text
 Pattern
@@ -64,6 +76,8 @@ Variation
 ├─ tracks[8]
 │  ├─ track_length_steps
 │  ├─ track_swing_amount
+│  ├─ trigger_engine
+│  ├─ pitch_engine
 │  └─ steps[128]
 └─ variation_metadata
 ```
@@ -87,15 +101,84 @@ The default behavior should be simple:
 ```text
 master_length_steps: 16
 track_length_steps: inherit master length
+trigger_engine.mode: STEP
 ```
 
 Polymeter is enabled by changing track lengths independently.
+
+STEP mode uses the visible grid directly. EUCLIDEAN mode may generate trigger placement from `steps`, `hits`, and `rotation`, but it only decides when a sound plays. It does not decide which note is played.
+
+---
+
+## Trigger / Pitch Engine Separation
+
+TribeBox must not confuse rhythm generation with note generation.
+
+Every track can be understood as two independent layers:
+
+```text
+Track
+├─ Trigger Engine
+│  └─ when the sound plays
+└─ Pitch Engine
+   └─ which note or pitch is used
+```
+
+Example:
+
+```text
+Track 7 Acid
+Trigger Engine = EUCLIDEAN
+Pitch Engine   = GENERATIVE
+Root           = E
+Scale          = phrygian
+```
+
+Meaning:
+
+```text
+The rhythm is Euclidean.
+The notes are generated inside E phrygian.
+```
+
+Initial Trigger Engine modes:
+
+```text
+STEP
+EUCLIDEAN
+```
+
+Initial Pitch Engine modes:
+
+```text
+OFF
+MANUAL
+ROOT_LOCK
+SCALE_LOCK
+GENERATIVE
+```
+
+This allows combinations such as:
+
+```text
+Kick: Step + Root Lock
+Bass: Euclidean + Generative
+Acid: Step + Scale Lock
+Perc: Euclidean + Off
+Stab: Step + Root Lock
+```
+
+Detailed behavior, per-track recommendations, sample metadata requirements, and playback resolution order are defined in `trigger-pitch-engine.md`.
 
 ---
 
 ## Step Data Model
 
 A step may contain trigger state, note data, timing offsets, conditions, probability, performance flags, sample/slice locks, retrig settings, and parameter locks.
+
+In STEP trigger mode, `active` is the direct grid trigger state.
+
+In EUCLIDEAN trigger mode, generated trigger placement may be resolved into the same playback event model, while preserving the Euclidean engine parameters at track level.
 
 Example generic step:
 
@@ -236,6 +319,8 @@ Step 05: sample_lock → siren.wav
 Step 09: sample_lock → stab.wav
 Step 13: default vocal_loop.wav
 ```
+
+Tonal sample locks may additionally use sample metadata such as `root_note` and `sample_type` for Root Lock or Scale Lock behavior. The detailed rule is defined in `trigger-pitch-engine.md`.
 
 ---
 
@@ -540,7 +625,7 @@ Pattern changes are quantized to the master pattern boundary, not to each indivi
 
 ---
 
-## Scale Lock and Root Note
+## Musical Context, Root Lock, Scale Lock, and Generative Pitch
 
 Each Pattern defines a musical context:
 
@@ -549,34 +634,13 @@ root_note
 scale
 ```
 
-Bass and Acid may use one of two note modes:
+This context is used by tonal Pitch Engine modes:
 
 ```text
-CHROMATIC
-SCALE_LOCKED
+ROOT_LOCK
+SCALE_LOCK
+GENERATIVE
 ```
-
-### Chromatic
-
-Notes are stored as free semitones.
-
-This is useful for:
-
-- Acid lines
-- chromatic passing notes
-- out-of-scale gestures
-- sound design
-
-### Scale Locked
-
-Notes are quantized to the Pattern scale.
-
-This is useful for:
-
-- fast bassline creation
-- live note entry
-- generative pitch tools
-- avoiding accidental wrong notes
 
 Initial scale set:
 
@@ -596,28 +660,25 @@ root_note: C
 scale: chromatic
 ```
 
----
+Root Lock, Scale Lock, and Generative pitch behavior are not the same feature:
 
-## Generative Pitch Tools
+| Mode | Meaning |
+| --- | --- |
+| ROOT_LOCK | Anchors a sound to the project/pattern root |
+| SCALE_LOCK | Corrects entered or produced notes into the selected scale |
+| GENERATIVE | Creates note choices inside musical rules |
 
-Generative pitch behavior is implemented only as editor actions, not as autonomous playback generation.
+The full architecture is defined in `trigger-pitch-engine.md`.
 
-Initial tools:
-
-- randomize notes in scale
-- mutate selected notes
-- rotate notes
-- transpose selected track
-- octave randomize
-
-Rule:
+Important rule:
 
 ```text
-generative tool = explicit editing action
-not generative playback engine
+Scale Lock corrects notes.
+Generative creates notes.
+Root Lock anchors tonal material to the root.
 ```
 
-This keeps TribeBox predictable during live use and easier to debug during development.
+For live reliability, the first implementation should keep generative pitch behavior explicit, recallable, and easy to inspect. Invisible uncontrolled playback mutation is not part of the default v0.1 behavior.
 
 ---
 
@@ -642,6 +703,8 @@ Suggested use:
 A Variation stores sequencer data:
 
 - step data
+- trigger engine settings
+- pitch engine settings
 - track length
 - trig conditions
 - probability
@@ -684,6 +747,8 @@ Factory Default
 → Track Sound
 → Kit
 → Pattern Variation
+→ Trigger Engine
+→ Pitch Engine
 → Step Parameter Locks
 → Accent / Slide / Retrig modifiers
 → Performance Macros
@@ -691,6 +756,8 @@ Factory Default
 → Mixer
 → Master Safety Limiter
 ```
+
+The Trigger Engine decides whether an event exists. The Pitch Engine only resolves note or pitch data for events that actually trigger.
 
 The Master Safety Limiter remains final and should not be bypassed accidentally.
 
@@ -708,6 +775,8 @@ The Master Safety Limiter remains final and should not be bypassed accidentally.
 - mute
 - pattern clock
 - basic sample/synth triggering
+- Trigger Engine mode: STEP
+- Pitch Engine modes: OFF / MANUAL
 
 ### Phase 2 — Elektron Core
 
@@ -718,6 +787,8 @@ The Master Safety Limiter remains final and should not be bypassed accidentally.
 - Acid slide
 - microtiming
 - swing
+- Root Lock
+- Scale Lock
 
 ### Phase 3 — Variation Engine
 
@@ -727,9 +798,12 @@ The Master Safety Limiter remains final and should not be bypassed accidentally.
 - fill
 - Variation A/B/C/D
 - reload pattern
+- Euclidean Trigger Engine
 
-### Phase 4 — Performance Layer
+### Phase 4 — Controlled Generative Pitch and Performance Layer
 
+- Generative Pitch Engine
+- root/scale/range/density/probability/evolution parameters
 - Morph Scenes
 - macro layer
 - safe reset
@@ -740,6 +814,6 @@ The Master Safety Limiter remains final and should not be bypassed accidentally.
 
 ## Final Decision
 
-The TribeBox Sequencer Engine is defined as an Elektron-inspired step sequencer with 8 fixed tracks, 16-step pages, up to 128 steps per pattern, per-track length, deep but whitelisted parameter locks, sample and slice locks for Track 8, accent, Acid slide, microtiming, swing, retrig, fill, trig conditions, probability, scale/root context, limited editor-based generative pitch tools, and non-destructive pattern variations.
+The TribeBox Sequencer Engine is defined as an Elektron-inspired step sequencer with 8 fixed tracks, 16-step pages, up to 128 steps per pattern, per-track length, separate Trigger Engine and Pitch Engine layers, STEP and EUCLIDEAN trigger modes, OFF / MANUAL / ROOT_LOCK / SCALE_LOCK / GENERATIVE pitch modes, deep but whitelisted parameter locks, sample and slice locks for Track 8, accent, Acid slide, microtiming, swing, retrig, fill, trig conditions, probability, shared root/scale context, controlled generative pitch behavior, and non-destructive pattern variations.
 
 The engine prioritizes live reliability, mono sound-system performance, readable musical behavior, and fast recovery over unrestricted DAW-style automation.

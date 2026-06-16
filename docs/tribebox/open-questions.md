@@ -2,44 +2,11 @@
 
 This document tracks TribeBox design decisions that are still open.
 
-Closed topics are intentionally not listed here anymore. Finalized decisions are documented in their dedicated files, such as UI layout/workflow, Pattern System, FX Engine, Sample Engine, and Hybrid Sound Engine.
+Closed topics are intentionally not listed here anymore. Finalized decisions are documented in their dedicated files, such as UI layout/workflow, Pattern System, FX Engine, Sample Engine, Hybrid Sound Engine, and Sequencer Engine.
 
 ---
 
-## 1. Sequencer Engine — **OPEN**
-
-Priority: **high**
-
-The Sequencer Engine is the next core area to define because it connects Pattern System, Hybrid Sound Engine, Sample Locks, Acid accent/slide behavior, Morph Scenes, and live performance workflow.
-
-Open questions:
-
-- Step sequencing model
-- Parameter lock depth
-- Per-step sample lock interaction with Track 8 Sampler
-- Per-step slice lock interaction with Track 8 Sampler
-- Accent handling across Kick, Bass, Acid, and sample tracks
-- Slide handling for Acid/Lead mode
-- Microtiming resolution
-- Swing model
-- Retrigger / ratchet behavior
-- Fill behavior
-- Trig conditions
-- Probability
-- Track length and polymeter
-- Scale lock / root note system for Bass and Acid/Lead
-- Generative pitch tools, if any
-- Pattern variation workflow
-
-Related future documents:
-
-- `docs/tribebox/sequencer/sequencer-engine.md`
-- `docs/tribebox/sequencer/parameter-locks.md`
-- `docs/tribebox/sequencer/trig-conditions.md`
-
----
-
-## 2. Mixer Engine — **OPEN**
+## 1. Mixer Engine — **OPEN**
 
 Priority: **high**
 
@@ -67,7 +34,7 @@ Related future documents:
 
 ---
 
-## 3. Project / File Format — **OPEN**
+## 2. Project / File Format — **OPEN**
 
 Priority: **high**
 
@@ -101,7 +68,7 @@ Related future documents:
 
 ---
 
-## 4. Kit / Sound Library — **OPEN**
+## 3. Kit / Sound Library — **OPEN**
 
 Priority: **medium-high**
 
@@ -130,7 +97,7 @@ Related future documents:
 
 ---
 
-## 5. MIDI / Sync / OSC — **OPEN**
+## 4. MIDI / Sync / OSC — **OPEN**
 
 Priority: **medium-high**
 
@@ -161,7 +128,7 @@ Related future documents:
 
 ---
 
-## 6. Audio I/O / Hardware Assumptions — **OPEN**
+## 5. Audio I/O / Hardware Assumptions — **OPEN**
 
 Priority: **medium-high**
 
@@ -190,7 +157,7 @@ Related future documents:
 
 ---
 
-## 7. Performance Macros — **OPEN**
+## 6. Performance Macros — **OPEN**
 
 Priority: **medium**
 
@@ -218,7 +185,7 @@ Related future documents:
 
 ---
 
-## 8. Hardware BOM — **OPEN**
+## 7. Hardware BOM — **OPEN**
 
 Priority: **medium**
 
@@ -247,7 +214,7 @@ Related future documents:
 
 ---
 
-## 9. Development Roadmap v0.1 — **OPEN**
+## 8. Development Roadmap v0.1 — **OPEN**
 
 Priority: **medium**
 
@@ -278,6 +245,6 @@ Related future documents:
 
 Recommended next open question to close:
 
-**Sequencer Engine**
+**Mixer Engine**
 
-Reason: it is the central layer connecting Pattern System, Sound Engine, Sample Engine, Acid accent/slide behavior, Parameter Locks, Morph Scenes, and live performance workflow.
+Reason: it is the next central layer connecting Track Sounds, FX sends, Morph Scenes, performance mute behavior, master level, metering, and the final safety limiter.

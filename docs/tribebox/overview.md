@@ -37,6 +37,26 @@ The v0.1 pattern model is based on:
 
 See `docs/tribebox/sequencer/pattern-system.md`.
 
+## FX Engine
+
+The v0.1 FX engine is based on a fixed performance-first routing model:
+
+```text
+Tracks -> Per-track Drive/Filter -> Global Delay/Reverb Sends -> Performance FX -> Safety Limiter -> Output
+```
+
+Core decisions:
+
+- per-track Drive and Filter
+- one global send Delay
+- one global send Reverb
+- selectable drive per track with different defaults
+- filter types: LP12, LP24, HP12, BP12, Notch, Peak/Resonator, Acid LP
+- required Performance FX: Master Filter, Stutter / Beat Repeat, Delay Throw, Delay Freeze, Reverb Swell, Safety Limiter
+- fixed routing, with Morph Scene modulation over all major FX parameters
+
+See `docs/tribebox/audio/fx-engine.md`.
+
 ## Planned Features
 
 - Step sequencing

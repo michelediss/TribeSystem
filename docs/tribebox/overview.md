@@ -22,6 +22,24 @@ It is designed as a compact live groovebox for Tekno, Tribe, Hardtek and Acid pe
 - Track 7: Acid / Lead
 - Track 8: Sampler
 
+## Sample Engine
+
+The v0.1 Sample Engine is built around Track 8 as the dedicated Sampler track and is designed exclusively for live mono sound-system use.
+
+Core decisions:
+
+- mono-only playback
+- Track 8 Sampler scope in v0.1
+- Sample Locks only on Track 8
+- manual slicing and equal-grid slicing
+- no realtime time-stretch in v0.1
+- pitch/speed playback only
+- folder-based sample browser
+- sidecar `.tribe.json` metadata per sample
+- project-level `sample-index.json`
+
+See `docs/tribebox/audio/sample-engine.md`.
+
 ## Pattern System
 
 The v0.1 pattern model is based on:

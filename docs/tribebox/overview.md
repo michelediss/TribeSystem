@@ -9,8 +9,8 @@ It is designed as a compact live groovebox for Tekno, Tribe, Hardtek and Acid pe
 - Sequencer
 - Pattern system
 - Morph Scene performance layer
+- Hybrid Sound Engine
 - Sampler
-- Synth engine
 - Internal FX engine
 - OSC output
 
@@ -21,6 +21,33 @@ It is designed as a compact live groovebox for Tekno, Tribe, Hardtek and Acid pe
 - Track 3-6: Drums and Percussion
 - Track 7: Acid / Lead
 - Track 8: Sampler
+
+## Sound Engine
+
+The v0.1 Sound Engine uses a hybrid sample+synth architecture designed for mono live sound-system use.
+
+Core track map:
+
+- Track 1 Kick: mono sample + drive/filter
+- Track 2 Bass: mono subtractive synth with simple Rumble mode
+- Track 3 Perc 1: mono sample
+- Track 4 Perc 2: mono sample
+- Track 5 Hat/Ride: mono sample, with future noise-hat option
+- Track 6 Perc/Noise: mono sample, with future synth/noise option
+- Track 7 Acid/Lead: TB-303-like mono synth with alternate Lead mode
+- Track 8 Sampler: full mono sampler
+
+Core decisions:
+
+- drums are sample-based and performance-processed
+- Bass uses subtractive mono synthesis with sub oscillator
+- Acid uses TB-303-like behavior with accent, slide, Acid LP and Acid Overdrive
+- Lead is an alternate Track 7 mode, not a dedicated polyphonic track
+- granular, wavetable, vector and spectral synthesis are future roadmap items
+- modulation is based on envelopes, 1 LFO per synth track, parameter locks and Morph Scene targets
+- sound storage uses Sound Preset, Track Sound, Kit, Pattern Override and Morph Scene layers
+
+See `docs/tribebox/audio/sound-engine.md`.
 
 ## Sample Engine
 
